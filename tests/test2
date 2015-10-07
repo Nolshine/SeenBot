@@ -1,0 +1,3 @@
+esper :jac PRIVMSG #3dpe :hi
+esper :jac NICK jac2
+esper :abc PRIVMSG #3dpe :!seen jac
