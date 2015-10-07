@@ -1,6 +1,7 @@
 import time
 import datetime
 import json
+import os.path
 
 class DATA_CELL(object):
     def __init__(self, nick, timestamp):
@@ -8,12 +9,36 @@ class DATA_CELL(object):
         self.current_nick = nick
         self.nick_history = []
         self.recent_timestamp = timestamp
+    @staticmethod
+    def load(s):
+        dc = DATA_CELL(s['current_nick'], s['recent_timestamp'])
+        for nick in s['nick_history']:
+            self.nick_history.append(nick)
+        return dc
 
 class SEENBOT(object):
     """handles storing and tracking 'last seen' data of users in the channel."""
 
-    def __init__(self):
+    def __init__(self, filename = "SolSeer.json"):
         self.database = []
+        self.filename = filename
+        self.load()
+
+    def toJson(self):
+        return json.dumps(self.__dict__, default=lambda o: o.__dict__)
+
+    def save(self):
+        f = open(self.filename, 'w')
+        f.write(self.toJson() + "\n")
+
+    def load(self):
+        if not os.path.isfile(self.filename):
+            return
+        f = open(self.filename, 'r')
+        l = f.readline()
+        o = json.loads(l)
+        for cell in o['database']:
+            self.database.append(DATA_CELL.load(cell))
 
     def process(self, raw, botnick): # please do remove anything in front of the 'nick!name@hostmask' part of the raw
         data = raw.lower().split()
@@ -36,6 +61,8 @@ class SEENBOT(object):
                         cell.current_nick = newnick
             if not nick_exists:
                 self.database.append(DATA_CELL(nick, timestamp))
+            self.save()
+
         if data[1] == "privmsg":
             if len(data) >= 4:
                 if data[3] == ":!seen":
