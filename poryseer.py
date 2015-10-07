@@ -11,11 +11,9 @@ config["debug"] = False
 
 def debug(text):
     if config["debug"]:
-        sys.stderr.wirte(text + '\n')
+        sys.stderr.write(text + '\n')
 
 seenBot = SEENBOT.SEENBOT() # initialize the bot
-
-debug("connecting")
 
 for line in iter(sys.stdin.readline, b''):
 # strip network name
