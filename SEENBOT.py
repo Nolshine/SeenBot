@@ -2,10 +2,11 @@ import time
 import datetime
 import json
 import os.path
+import sys
 
 class DATA_CELL(object):
     def __init__(self, nick, timestamp):
-        print "added new nick: " + nick
+        sys.stderr.write("added new nick: " + nick + '\n')
         self.current_nick = nick
         self.nick_history = []
         self.recent_timestamp = timestamp
@@ -42,7 +43,7 @@ class SEENBOT(object):
 
     def process(self, raw, botnick): # please do remove anything in front of the 'nick!name@hostmask' part of the raw
         data = raw.lower().split()
-        print data
+        sys.stderr.write(str(data) + '\n')
         nick = data[0].strip(':').split('!')[0]
         timestamp = time.time()
         timestamp = datetime.datetime.fromtimestamp(timestamp).strftime('%d/%m/%Y %H:%M:%S')

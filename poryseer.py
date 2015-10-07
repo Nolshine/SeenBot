@@ -11,7 +11,7 @@ config["debug"] = False
 
 def debug(text):
     if config["debug"]:
-        print text
+        sys.stderr.wirte(text + '\n')
 
 seenBot = SEENBOT.SEENBOT() # initialize the bot
 
