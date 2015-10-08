@@ -3,6 +3,7 @@ import datetime
 import json
 import os.path
 import sys
+import string
 
 class DATA_CELL(object):
     def __init__(self, nick, timestamp):
@@ -10,6 +11,7 @@ class DATA_CELL(object):
         self.current_nick = nick
         self.nick_history = []
         self.recent_timestamp = timestamp
+        self.memos = {}
     @staticmethod
     def load(s):
         dc = DATA_CELL(s['current_nick'], s['recent_timestamp'])
@@ -64,22 +66,45 @@ class SEENBOT(object):
                 self.database.append(DATA_CELL(nick, timestamp))
             self.save()
 
+        outgoing = []
+
+        for cell in self.database:
+            if (cell.current_nick == nick) or (nick in cell.nick_history):
+                if cell.memos != {}:
+                    outgoing.append(cell.current_nick + ": You have memos!")
+                    for sender in cell.memos:
+                        msg = cell.memos[sender][0] + " - " + sender + " said to you: " + cell.memos[sender][1]
+                        outgoing.append(msg)
+                cell.memos = {}
+                self.save()
+
         if data[1] == "privmsg":
             if len(data) >= 4:
                 if data[3] == ":!seen":
                     if len(data) == 4:
-                        return "Invalid use of '!seen'"
+                        outgoing.append("'!seen' requires a target. (!seen <TARGET>)")
                     query = data[4]
                     if query == botnick.lower():
-                        return "Last seen " + query + " on " + timestamp + ", when looking at the mirror."
+                        outgoing.append("Last seen " + query + " on " + timestamp + ", when looking at the mirror.")
                     for cell in self.database:
                         if (cell.current_nick == query) or (query in cell.nick_history):
-                            msg = "Last seen " + query + " on " + cell.recent_timestamp + ", as " + cell.current_nick
-                            return msg
-                    return "I have not seen " + query + " yet."
-                elif data[3] == ":!json":
-                    for cell in self.database:
-                        if (cell.current_nick == nick) or (nick in cell.nick_history):
-                            return json.dumps({cell.current_nick:[cell.nick_history, cell.recent_timestamp]})
-                else:
-                    return None
+                            outgoing.append("Last seen " + query + " on " + cell.recent_timestamp + ", as " + cell.current_nick)
+                    outgoing.append("I have not seen " + query + " yet.")
+                elif data[3] == ":!tell":
+                    if len(data) == 4:
+                        outgoing.append("'!tell' requires two arguments. (!tell <TARGET> <MESSAGE>)")
+                    else:
+                        target = data[4]
+                        if len(data) == 5:
+                            outgoing.append("'!tell' requires two arguments. (!tell <TARGET> <MESSAGE>)")
+                        else:
+                            for cell in self.database:
+                                if (target == cell.current_nick) or (target in cell.nick_history):
+                                    memo = string.join(data[5:])
+                                    cell.memos[nick] = (timestamp, memo)
+                                    sys.stderr.write(timestamp + ": Added memo: " + memo + " to CELL: " + cell.current_nick + "\n")
+                                    outgoing.append("I will tell them when I next see them.")
+                                    self.save()
+        if outgoing != []:
+            return outgoing
+        else: return None
