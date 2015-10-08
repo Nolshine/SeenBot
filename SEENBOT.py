@@ -16,7 +16,7 @@ class DATA_CELL(object):
     def load(s):
         dc = DATA_CELL(s['current_nick'], s['recent_timestamp'])
         for nick in s['nick_history']:
-            self.nick_history.append(nick)
+            dc.nick_history.append(nick)
         return dc
 
 class SEENBOT(object):
