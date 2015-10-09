@@ -26,7 +26,7 @@ class SEENBOT(object):
         self.database = []
         self.filename = filename
         self.load()
-
+        
     def toJson(self):
         return json.dumps(self.__dict__, default=lambda o: o.__dict__)
 
@@ -83,21 +83,30 @@ class SEENBOT(object):
                 if data[3] == ":!seen":
                     if len(data) == 4:
                         outgoing.append("'!seen' requires a target. (!seen <TARGET>)")
+                        return outgoing
                     query = data[4]
                     if query == botnick.lower():
                         outgoing.append("Last seen " + query + " on " + timestamp + ", when looking at the mirror.")
+                        return outgoing
                     for cell in self.database:
                         if (cell.current_nick == query) or (query in cell.nick_history):
                             outgoing.append("Last seen " + query + " on " + cell.recent_timestamp + ", as " + cell.current_nick)
+                            return outgoing
                     outgoing.append("I have not seen " + query + " yet.")
+                    return outgoing
                 elif data[3] == ":!tell":
                     if len(data) == 4:
                         outgoing.append("'!tell' requires two arguments. (!tell <TARGET> <MESSAGE>)")
+                        return outgoing
                     else:
                         target = data[4]
                         if len(data) == 5:
                             outgoing.append("'!tell' requires two arguments. (!tell <TARGET> <MESSAGE>)")
+                            return outgoing
                         else:
+                            if target == botnick.lower():
+                                outgoing.append("I cannot receive memos.")
+                                return outgoing
                             for cell in self.database:
                                 if (target == cell.current_nick) or (target in cell.nick_history):
                                     memo = string.join(data[5:])
@@ -105,6 +114,10 @@ class SEENBOT(object):
                                     sys.stderr.write(timestamp + ": Added memo: " + memo + " to CELL: " + cell.current_nick + "\n")
                                     outgoing.append("I will tell them when I next see them.")
                                     self.save()
-        if outgoing != []:
+                                    return outgoing
+                            outgoing.append("I have not seen "+target+" yet.")
+                            return outgoing
+        if outgoing == []:
+            return None
+        else:
             return outgoing
-        else: return None

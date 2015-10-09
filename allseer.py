@@ -58,7 +58,8 @@ try:
                     console = "\n-X- ATTENTION -X- " + line + "\n"
                     seen = seenBot.process(line, config["nick"])
                     if seen != None:
-                        irc.send("PRIVMSG " + config["channel"] + " :" + seen + "\r\n")
+                        for line in seen:
+                            irc.send("PRIVMSG " + config["channel"] + " :" + line + "\r\n")
                 debug(console)
                 print line
         if stop:
