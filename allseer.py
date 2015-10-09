@@ -11,9 +11,17 @@ config["nick"] = "SolSeer"
 config["channel"] = "#3dpe"
 config["debug"] = False
 
+f = open("bot.conf", 'r')
+for line in f.readlines():
+    data = line.split()
+    config[data[0]] = data[1]
+f.close()
+
 def debug(text):
     if config["debug"]:
         print text
+
+debug(str(config))
 
 seenBot = SEENBOT.SEENBOT() # initialize the bot
 
@@ -56,7 +64,7 @@ try:
                     irc.send(pong)
                 if ("PRIVMSG" in line) or ("NICK" in line):
                     console = "\n-X- ATTENTION -X- " + line + "\n"
-                    seen = seenBot.process(line, config["nick"])
+                    seen = seenBot.process(line, config["nick"], config["dev_key"])
                     if seen != None:
                         for line in seen:
                             irc.send("PRIVMSG " + config["channel"] + " :" + line + "\r\n")
