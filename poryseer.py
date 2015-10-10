@@ -1,17 +1,16 @@
 #!/usr/bin/env python2
 import sys
 import SEENBOT
+from config import Config
 
+config = Config("bot.conf")
+config.load("secret.conf")
 
-#### CONFIG ####
-config = {}
-config["network"] = "esper"
-config["nick"] = "porygit"
-config["channel"] = "#3dpe"
-config["debug"] = True
+print config.network
+print config.channel
 
 def debug(text):
-    if config["debug"]:
+    if config.debug:
         sys.stderr.write(text + '\n')
 
 seenBot = SEENBOT.SEENBOT() # initialize the bot
@@ -21,11 +20,12 @@ for line in iter(sys.stdin.readline, b''):
     line = ' '.join(line[:-1].split(' ')[1:])
 
     if ("PRIVMSG" in line) or ("NICK" in line):
-        debug(config["nick"] + " in: " + line)
-        seen = seenBot.process(line, config["nick"])
+        debug(config.nick + " in: " + line)
+        seen = seenBot.process(line, config.nick, config.dev_key)
         if seen != None:
-            ircMessage = config["network"] + " PRIVMSG " + config["channel"] + " :" + seen
-            debug(config["nick"] + " out: " + ircMessage)
-            print ircMessage
-            sys.stdout.flush()
+            for msg in seen:
+                ircMessage = config.network + " PRIVMSG " + config.channel + " :" + msg
+                debug(config.nick + " out: " + ircMessage)
+                print ircMessage
+                sys.stdout.flush()
 

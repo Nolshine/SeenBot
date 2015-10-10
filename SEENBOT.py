@@ -116,7 +116,7 @@ class SEENBOT(object):
                                 return outgoing
                             for cell in self.database:
                                 if (target == cell.current_nick) or (target in cell.nick_history):
-                                    memo = string.join(data[5:])
+                                    memo = string.join(data[5:]).decode('utf-8', 'ignore')
                                     cell.memos.append((timestamp, nick, memo))
                                     sys.stderr.write(timestamp + ": Added memo: " + memo + " to CELL: " + cell.current_nick + "\n".decode('utf-8', 'ignore'))
                                     outgoing.append("I will tell them when I next see them.")

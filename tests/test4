@@ -1,0 +1,5 @@
+esper :jac PRIVMSG #3dpe :hi
+esper :abc PRIVMSG #3dpe :!seen jac
+esper :fleece PRIVMSG #3dpe :!tell jac  牛肉
+esper :jac PRIVMSG #3dpe :hi again
+esper :jac PRIVMSG #3dpe :!memos
