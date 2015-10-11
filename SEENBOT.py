@@ -1,5 +1,5 @@
-import time
-import datetime
+from datetime import datetime
+import pytz
 import json
 import os.path
 import sys
@@ -23,7 +23,7 @@ class DATA_CELL(object):
         for memo in s['memos']:
             dc.memos.append(memo)
         if s['message_light'] == 'true':
-            sys.stderr.write("string 'true' loads correcly")
+            sys.stderr.write("string 'true' loads correctly")
             dc.message_light = True
         elif s['message_light'] == True:
             sys.stderr.write("actual boolean value loads correctly")
@@ -58,12 +58,11 @@ class SEENBOT(object):
         data = raw.lower().split()
         sys.stderr.write(str(data) + '\n')
         nick = data[0].strip(':').split('!')[0]
-        timestamp = time.time()
-        timestamp = datetime.datetime.fromtimestamp(timestamp).strftime('%d/%m/%Y %H:%M:%S')
+        timestamp = datetime.now(pytz.utc).strftime("%c") + " UTC"
         if self.database == []:
             self.database.append(DATA_CELL(nick, timestamp))
         else:
-            nick_exists = False
+            nick_exists = False     
             for cell in self.database:
                 if cell.current_nick == nick:
                     nick_exists = True
@@ -116,9 +115,9 @@ class SEENBOT(object):
                                 return outgoing
                             for cell in self.database:
                                 if (target == cell.current_nick) or (target in cell.nick_history):
-                                    memo = string.join(data[5:]).decode('utf-8', 'ignore')
+                                    memo = string.join(data[5:]).decode('UTF-8', 'replace')
                                     cell.memos.append((timestamp, nick, memo))
-                                    sys.stderr.write(timestamp + ": Added memo: " + memo + " to CELL: " + cell.current_nick + "\n".decode('utf-8', 'ignore'))
+                                    #sys.stderr.write(timestamp + ": Added memo: " + memo + " to CELL: " + cell.current_nick + "\n")
                                     outgoing.append("I will tell them when I next see them.")
                                     cell.message_light = True
                                     self.save()
@@ -134,9 +133,7 @@ class SEENBOT(object):
                                 pb_api_paste_code = ""
                                 for memo in cell.memos:
                                     msg = memo[0] + " - " + memo[1] + " said to you: " + memo[2] + "\n"
-                                    sys.stderr.write(msg+"\n".decode('utf-8', 'ignore'))
                                     pb_api_paste_code += msg
-                                sys.stderr.write(pb_api_paste_code)
 
                                 # this portion will convert memo list to a pastebin post
                                 url = "http://pastebin.com/api/api_post.php"
@@ -154,6 +151,9 @@ class SEENBOT(object):
                             else:
                                 outgoing.append(nick + ":You have no memos.")
                                 return outgoing
+                elif "!time" in data[3]:
+                    outgoing.append("The time is: " + timestamp)
+                    return outgoing
 
         if outgoing == []:
             return None

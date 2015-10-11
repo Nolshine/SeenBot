@@ -5,12 +5,6 @@ import SEENBOT
 
 #### CONFIG ####
 config = {}
-config["server"] = "irc.esper.net"
-config["port"] = 6666
-config["nick"] = "SolSeer"
-config["channel"] = "#3dpe"
-config["debug"] = False
-
 f = open("bot.conf", 'r')
 for line in f.readlines():
     data = line.split()
@@ -28,7 +22,7 @@ seenBot = SEENBOT.SEENBOT() # initialize the bot
 debug("connecting")
 # start up IRC (might delegate all this to a handler later
 irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-irc.connect((config["server"], config["port"]))
+irc.connect((config["server"], int(config["port"])))
 debug("connected.")
 
 debug("sending identity")
