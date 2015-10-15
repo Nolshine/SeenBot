@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 import sys
-import SEENBOT
+import Seenbot
 from config import Config
 
 config = Config("bot.conf")

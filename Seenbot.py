@@ -6,7 +6,7 @@ import sys
 import string
 import requests
 
-class DATA_CELL(object):
+class DataCell(object):
     def __init__(self, nick, timestamp):
         sys.stderr.write("added new nick: " + nick + '\n')
         self.current_nick = nick
@@ -17,7 +17,7 @@ class DATA_CELL(object):
                                    # when the person is seen the bot will inform them they have memos and turn this flag off.
     @staticmethod
     def load(s):
-        dc = DATA_CELL(s['current_nick'], s['recent_timestamp'])
+        dc = DataCell(s['current_nick'], s['recent_timestamp'])
         for nick in s['nick_history']:
             dc.nick_history.append(nick)
         for memo in s['memos']:
@@ -30,7 +30,7 @@ class DATA_CELL(object):
             dc.message_light = True
         return dc
 
-class SEENBOT(object):
+class Seenbot(object):
     """handles storing and tracking 'last seen' data of users in the channel."""
 
     def __init__(self, filename = "SolSeer.json"):
@@ -52,7 +52,7 @@ class SEENBOT(object):
         l = f.readline()
         o = json.loads(l)
         for cell in o['database']:
-            self.database.append(DATA_CELL.load(cell))
+            self.database.append(DataCell.load(cell))
 
     def process(self, raw, botnick, pb_api_dev_key): # please do remove anything in front of the 'nick!name@hostmask' part of the raw
         data = raw.lower().split()
@@ -60,7 +60,7 @@ class SEENBOT(object):
         nick = data[0].strip(':').split('!')[0]
         timestamp = datetime.now(pytz.utc).strftime("%c") + " UTC"
         if self.database == []:
-            self.database.append(DATA_CELL(nick, timestamp))
+            self.database.append(DataCell(nick, timestamp))
         else:
             nick_exists = False     
             for cell in self.database:
@@ -73,7 +73,7 @@ class SEENBOT(object):
                             cell.nick_history.append(nick)
                         cell.current_nick = newnick
             if not nick_exists:
-                self.database.append(DATA_CELL(nick, timestamp))
+                self.database.append(DataCell(nick, timestamp))
             self.save()
 
         outgoing = []

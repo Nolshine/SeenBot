@@ -1,6 +1,6 @@
 import select
 import socket
-import SEENBOT
+import Seenbot
 
 
 #### CONFIG ####
@@ -17,7 +17,7 @@ def debug(text):
 
 debug(str(config))
 
-seenBot = SEENBOT.SEENBOT() # initialize the bot
+seenBot = Seenbot.Seenbot() # initialize the bot
 
 debug("connecting")
 # start up IRC (might delegate all this to a handler later
