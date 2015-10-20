@@ -54,35 +54,82 @@ class Seenbot(object):
         for cell in o['database']:
             self.database.append(DataCell.load(cell))
 
-    def process(self, raw, botnick, pb_api_dev_key): # please do remove anything in front of the 'nick!name@hostmask' part of the raw
+    def process(self, raw, botnick, pb_api_dev_key):
         data = raw.lower().split()
-        sys.stderr.write(str(data) + '\n')
+        case = None
         nick = data[0].strip(':').split('!')[0]
+
+        if nick == botnick:
+            print "ignoring own actions."
+            return None
+
         timestamp = datetime.now(pytz.utc).strftime("%c") + " UTC"
-        if self.database == []:
-            self.database.append(DataCell(nick, timestamp))
-        else:
-            nick_exists = False     
-            for cell in self.database:
-                if cell.current_nick == nick:
-                    nick_exists = True
-                    cell.recent_timestamp = timestamp
-                    if (data[1] == "nick"):
-                        newnick = data[2].strip(":")
-                        if not (nick in cell.nick_history):
-                            cell.nick_history.append(nick)
-                        cell.current_nick = newnick
-            if not nick_exists:
-                self.database.append(DataCell(nick, timestamp))
-            self.save()
+        if len(data) > 1:
+            case = data[1]
+        modified_db = False
+        if case != None:
+            if (case == 'join') or (case == 'privmsg'):
+                print "JOIN or PRIVMSG detected."
+                if self.database == []:
+                    self.database.append(DataCell(nick, timestamp))
+                else:
+                    found = False
+                    for cell in self.database:
+                        if nick in cell.nick_history:
+                            cell.current_nick = nick
+                            cell.recent_timestamp = timestamp
+                            found = True
+                            break
+                        elif nick == cell.current_nick:
+                            cell.recent_timestamp = timestamp
+                            found = True
+                            break
+                    if not found:
+                        self.database.append(DataCell(nick, timestamp))
+                    self.save()
 
-        outgoing = []
-
-        for cell in self.database:
-            if (cell.current_nick == nick) or (nick in cell.nick_history):
-                if cell.memos != [] and cell.message_light:
-                    outgoing.append(cell.current_nick + ": You have memos!")
-                    cell.message_light = False
+            if case == 'nick':
+                print "NICK detected."
+                new_nick = data[2].strip(':')
+                if self.database == []:
+                    self.database.append(DataCell(new_nick, timestamp))
+                else:
+                    found = False
+                    for cell in self.database:
+                        if nick == cell.current_nick:
+                            cell.current_nick = new_nick
+                            if not (nick in cell.nick_history):
+                                cell.nick_history.append(nick)
+                            cell.recent_timestamp = timestamp
+                            found = True
+                        elif nick in cell.nick_history:
+                            cell.current_nick = new_nick
+                            cell.recent_timestamp = timestamp
+                            found = True
+                        elif new_nick == cell.current_nick:
+                            cell.recent_timestamp = timestamp
+                            if not (nick in cell.nick_history):
+                                cell.nick_history.append(nick)
+                            found = True
+                        elif new_nick in cell.nick_history:
+                            cell.current_nick = new_nick
+                            cell.recent_timestamp = timestamp
+                            found = True
+                        if found:
+                            for i in range(len(self.database)):
+                                if self.database[i].recent_timestamp == timestamp:
+                                    continue
+                                if (self.database[i].current_nick == cell.current_nick) or \
+                                    (cell.current_nick in self.database[i].nick_history) or \
+                                    (self.database[i].current_nick in cell.nick_history):
+                                    for nickname in self.database[i].nick_history:
+                                        if not (nickname in cell.nick_history):
+                                            cell.nick_history.append(nickname)
+                                    self.database.pop(i)
+                            break
+                if not found:
+                    self.database.append(DataCell(new_nick, timestamp))
+                self.save()
 
         if data[1] == "privmsg":
             if len(data) >= 4:
@@ -117,7 +164,6 @@ class Seenbot(object):
                                 if (target == cell.current_nick) or (target in cell.nick_history):
                                     memo = string.join(data[5:]).decode('UTF-8', 'replace')
                                     cell.memos.append((timestamp, nick, memo))
-                                    #sys.stderr.write(timestamp + ": Added memo: " + memo + " to CELL: " + cell.current_nick + "\n")
                                     outgoing.append("I will tell them when I next see them.")
                                     cell.message_light = True
                                     self.save()
@@ -154,8 +200,3 @@ class Seenbot(object):
                 elif "!time" in data[3]:
                     outgoing.append("The time is: " + timestamp)
                     return outgoing
-
-        if outgoing == []:
-            return None
-        else:
-            return outgoing
