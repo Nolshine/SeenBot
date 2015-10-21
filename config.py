@@ -1,3 +1,4 @@
+import sys
 import os.path
 
 class Config:
@@ -12,6 +13,9 @@ class Config:
         if os.path.isfile(filename):
             with open(filename, "r") as f:
                 for line in f.readlines():
+                    line = line.rstrip()
+                    if len(line) == 0:
+                        continue
                     fs = line.split()
                     if len(fs) != 2:
                         sys.stderr.write("unkown config line: '%s'" % line)
@@ -21,4 +25,7 @@ class Config:
                     self.__dict__[fs[0]] = fs[1]
         else:
             raise Exception("file not found: " + filename)
+    def write(self, where):
+        for e in self.__dict__:
+            where.write('config.' + e + ': "' + self.__dict__[e] + '"\n')
 
