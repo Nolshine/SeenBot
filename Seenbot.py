@@ -58,6 +58,7 @@ class Seenbot(object):
         data = raw.lower().split()
         case = None
         nick = data[0].strip(':').split('!')[0]
+        outgoing = []
 
         if nick == botnick:
             print "ignoring own actions."
@@ -67,7 +68,10 @@ class Seenbot(object):
         if len(data) > 1:
             case = data[1]
         if case != None:
-            if (case == 'join') or (case == 'privmsg'):
+            case_join = (case == 'join')
+            case_privmsg = (case == 'privmsg')
+            case_nick = (case == 'nick')
+            if case_join or case_privmsg:
                 print "JOIN or PRIVMSG detected."
                 if self.database == []:
                     self.database.append(DataCell(nick, timestamp))
@@ -78,16 +82,19 @@ class Seenbot(object):
                             cell.current_nick = nick
                             cell.recent_timestamp = timestamp
                             found = True
-                            break
                         elif nick == cell.current_nick:
                             cell.recent_timestamp = timestamp
                             found = True
+                        if found:
+                            if cell.memos != [] and cell.message_light:
+                                outgoing.append(cell.current_nick + ": You have memos!")
+                                cell.message_light = False
                             break
                     if not found:
                         self.database.append(DataCell(nick, timestamp))
                     self.save()
 
-            if case == 'nick':
+            if case_nick:
                 print "NICK detected."
                 new_nick = data[2].strip(':')
                 if self.database == []:
@@ -115,6 +122,9 @@ class Seenbot(object):
                             cell.recent_timestamp = timestamp
                             found = True
                         if found:
+                            if cell.memos != [] and cell.message_light:
+                                outgoing.append(cell.current_nick + ": You have memos!")
+                                cell.message_light = False
                             for i in range(len(self.database)):
                                 if self.database[i].recent_timestamp == timestamp:
                                     continue
@@ -130,72 +140,72 @@ class Seenbot(object):
                     self.database.append(DataCell(new_nick, timestamp))
                 self.save()
 
-        if data[1] == "privmsg":
-            if len(data) >= 4:
-                if data[3] == ":!seen":
-                    if len(data) == 4:
-                        outgoing.append("'!seen' requires a target. (!seen <TARGET>)")
-                        return outgoing
-                    query = data[4]
-                    if query == botnick.lower():
-                        outgoing.append("Last seen " + query + " on " + timestamp + ", when looking at the mirror.")
-                        return outgoing
-                    for cell in self.database:
-                        if (cell.current_nick == query) or (query in cell.nick_history):
-                            outgoing.append("Last seen " + query + " on " + cell.recent_timestamp + ", as " + cell.current_nick)
+            if case_privmsg:
+                if len(data) >= 4:
+                    if data[3] == ":!seen":
+                        if len(data) == 4:
+                            outgoing.append("'!seen' requires a target. (!seen <TARGET>)")
                             return outgoing
-                    outgoing.append("I have not seen " + query + " yet.")
-                    return outgoing
-                elif data[3] == ":!tell":
-                    if len(data) == 4:
-                        outgoing.append("'!tell' requires two arguments. (!tell <TARGET> <MESSAGE>)")
+                        query = data[4]
+                        if query == botnick.lower():
+                            outgoing.append("Last seen " + query + " on " + timestamp + ", when looking at the mirror.")
+                            return outgoing
+                        for cell in self.database:
+                            if (cell.current_nick == query) or (query in cell.nick_history):
+                                outgoing.append("Last seen " + query + " on " + cell.recent_timestamp + ", as " + cell.current_nick)
+                                return outgoing
+                        outgoing.append("I have not seen " + query + " yet.")
                         return outgoing
-                    else:
-                        target = data[4]
-                        if len(data) == 5:
+                    elif data[3] == ":!tell":
+                        if len(data) == 4:
                             outgoing.append("'!tell' requires two arguments. (!tell <TARGET> <MESSAGE>)")
                             return outgoing
                         else:
-                            if target == botnick.lower():
-                                outgoing.append("I cannot receive memos.")
-                                return outgoing
-                            for cell in self.database:
-                                if (target == cell.current_nick) or (target in cell.nick_history):
-                                    memo = string.join(data[5:]).decode('UTF-8', 'replace')
-                                    cell.memos.append((timestamp, nick, memo))
-                                    outgoing.append("I will tell them when I next see them.")
-                                    cell.message_light = True
-                                    self.save()
-                                    return outgoing
-                            outgoing.append("I have not seen "+target+" yet.")
-                            return outgoing
-                elif data[3] == ":!memos":
-                    if (nick + ": You have memos!") in outgoing:
-                        outgoing.remove(nick + ": You have memos!")
-                    for cell in self.database:
-                        if nick == cell.current_nick:
-                            if cell.memos != []:
-                                pb_api_paste_code = ""
-                                for memo in cell.memos:
-                                    msg = memo[0] + " - " + memo[1] + " said to you: " + memo[2] + "\n"
-                                    pb_api_paste_code += msg
-
-                                # this portion will convert memo list to a pastebin post
-                                url = "http://pastebin.com/api/api_post.php"
-                                pb_payload = {}
-                                pb_payload["api_dev_key"] = pb_api_dev_key
-                                pb_payload["api_option"] = "paste"
-                                pb_payload["api_paste_private"] = "1" # paste an unlisted paste
-                                pb_payload["api_paste_expire"] = "1H" # expire new paste in one hour
-                                pb_payload["api_paste_code"] = pb_api_paste_code
-                                r = requests.post(url, pb_payload)
-                                outgoing.append(nick + ": Your link: " + r.text)
-                                cell.memos = []
-                                self.save()
+                            target = data[4]
+                            if len(data) == 5:
+                                outgoing.append("'!tell' requires two arguments. (!tell <TARGET> <MESSAGE>)")
                                 return outgoing
                             else:
-                                outgoing.append(nick + ":You have no memos.")
+                                if target == botnick.lower():
+                                    outgoing.append("I cannot receive memos.")
+                                    return outgoing
+                                for cell in self.database:
+                                    if (target == cell.current_nick) or (target in cell.nick_history):
+                                        memo = string.join(data[5:]).decode('UTF-8', 'replace')
+                                        cell.memos.append((timestamp, nick, memo))
+                                        outgoing.append("I will tell them when I next see them.")
+                                        cell.message_light = True
+                                        self.save()
+                                        return outgoing
+                                outgoing.append("I have not seen "+target+" yet.")
                                 return outgoing
-                elif "!time" in data[3]:
-                    outgoing.append("The time is: " + timestamp)
-                    return outgoing
+                    elif data[3] == ":!memos":
+                        if (nick + ": You have memos!") in outgoing:
+                            outgoing.remove(nick + ": You have memos!")
+                        for cell in self.database:
+                            if nick == cell.current_nick:
+                                if cell.memos != []:
+                                    pb_api_paste_code = ""
+                                    for memo in cell.memos:
+                                        msg = memo[0] + " - " + memo[1] + " said to you: " + memo[2] + "\n"
+                                        pb_api_paste_code += msg
+
+                                    # this portion will convert memo list to a pastebin post
+                                    url = "http://pastebin.com/api/api_post.php"
+                                    pb_payload = {}
+                                    pb_payload["api_dev_key"] = pb_api_dev_key
+                                    pb_payload["api_option"] = "paste"
+                                    pb_payload["api_paste_private"] = "1" # paste an unlisted paste
+                                    pb_payload["api_paste_expire"] = "1H" # expire new paste in one hour
+                                    pb_payload["api_paste_code"] = pb_api_paste_code
+                                    r = requests.post(url, pb_payload)
+                                    outgoing.append(nick + ": Your link: " + r.text)
+                                    cell.memos = []
+                                    self.save()
+                                    return outgoing
+                                else:
+                                    outgoing.append(nick + ":You have no memos.")
+                                    return outgoing
+                    elif "!time" in data[3]:
+                        outgoing.append("The time is: " + timestamp)
+                        return outgoing
