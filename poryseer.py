@@ -12,7 +12,7 @@ def debug(text):
     if config.debug:
         sys.stderr.write(text + '\n')
 
-seenBot = SEENBOT.SEENBOT() # initialize the bot
+seenBot = Seenbot.Seenbot() # initialize the bot
 
 for line in iter(sys.stdin.readline, b''):
 # strip network name

@@ -66,7 +66,6 @@ class Seenbot(object):
         timestamp = datetime.now(pytz.utc).strftime("%c") + " UTC"
         if len(data) > 1:
             case = data[1]
-        modified_db = False
         if case != None:
             if (case == 'join') or (case == 'privmsg'):
                 print "JOIN or PRIVMSG detected."
