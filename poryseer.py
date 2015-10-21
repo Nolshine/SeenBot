@@ -6,8 +6,7 @@ from config import Config
 config = Config("bot.conf")
 config.load("secret.conf")
 
-print config.network
-print config.channel
+config.write(sys.stderr)
 
 def debug(text):
     if config.debug:
