@@ -61,7 +61,7 @@ class Seenbot(object):
         outgoing = []
 
         if nick == botnick:
-            print "ignoring own actions."
+            sys.stderr.write("ignoring own actions.")
             return None
 
         timestamp = datetime.now(pytz.utc).strftime("%c") + " UTC"
@@ -72,7 +72,7 @@ class Seenbot(object):
             case_privmsg = (case == 'privmsg')
             case_nick = (case == 'nick')
             if case_join or case_privmsg:
-                print "JOIN or PRIVMSG detected."
+                sys.stderr.write("JOIN or PRIVMSG detected.")
                 if self.database == []:
                     self.database.append(DataCell(nick, timestamp))
                 else:
@@ -95,7 +95,7 @@ class Seenbot(object):
                     self.save()
 
             if case_nick:
-                print "NICK detected."
+                sys.stderr.write("NICK detected.")
                 new_nick = data[2].strip(':')
                 if self.database == []:
                     self.database.append(DataCell(new_nick, timestamp))
@@ -176,6 +176,7 @@ class Seenbot(object):
                                         outgoing.append("I will tell them when I next see them.")
                                         cell.message_light = True
                                         self.save()
+                                        sys.stderr.write("Added memo to cell " + cell.current_nick + ". see: Seenbot.json.")
                                         return outgoing
                                 outgoing.append("I have not seen "+target+" yet.")
                                 return outgoing
