@@ -1,3 +1,4 @@
 *.pyc
 secret.conf
 SolSeer.json
+bot.conf

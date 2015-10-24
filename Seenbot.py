@@ -5,6 +5,7 @@ import os.path
 import sys
 import string
 import requests
+import traceback
 
 class DataCell(object):
     def __init__(self, nick, timestamp):
@@ -72,7 +73,7 @@ class Seenbot(object):
             case_privmsg = (case == 'privmsg')
             case_nick = (case == 'nick')
             if case_join or case_privmsg:
-                sys.stderr.write("JOIN or PRIVMSG detected.")
+                sys.stderr.write("JOIN or PRIVMSG detected.\n")
                 if self.database == []:
                     self.database.append(DataCell(nick, timestamp))
                 else:
@@ -95,7 +96,7 @@ class Seenbot(object):
                     self.save()
 
             if case_nick:
-                sys.stderr.write("NICK detected.")
+                sys.stderr.write("NICK detected.\n")
                 new_nick = data[2].strip(':')
                 if self.database == []:
                     self.database.append(DataCell(new_nick, timestamp))
@@ -176,7 +177,7 @@ class Seenbot(object):
                                         outgoing.append("I will tell them when I next see them.")
                                         cell.message_light = True
                                         self.save()
-                                        sys.stderr.write("Added memo to cell " + cell.current_nick + ". see: Seenbot.json.")
+                                        sys.stderr.write("Added memo to cell " + cell.current_nick + ". see: Seenbot.json.\n")
                                         return outgoing
                                 outgoing.append("I have not seen "+target+" yet.")
                                 return outgoing
@@ -192,15 +193,32 @@ class Seenbot(object):
                                         pb_api_paste_code += msg
 
                                     # this portion will convert memo list to a pastebin post
-                                    url = "http://pastebin.com/api/api_post.php"
+                                    url = "https://serv2.pink/api/umiki/v1"
                                     pb_payload = {}
-                                    pb_payload["api_dev_key"] = pb_api_dev_key
-                                    pb_payload["api_option"] = "paste"
-                                    pb_payload["api_paste_private"] = "1" # paste an unlisted paste
-                                    pb_payload["api_paste_expire"] = "1H" # expire new paste in one hour
-                                    pb_payload["api_paste_code"] = pb_api_paste_code
-                                    r = requests.post(url, pb_payload)
-                                    outgoing.append(nick + ": Your link: " + r.text)
+                                    pb_payload["api_key"] = pb_api_dev_key
+                                    #pb_payload["api_option"] = "paste"
+                                    #pb_payload["api_paste_private"] = "1" # paste an unlisted paste
+                                    #pb_payload["api_paste_expire"] = "1H" # expire new paste in one hour
+                                    pb_payload["content"] = pb_api_paste_code
+                                    try:
+                                        r = requests.post(url, pb_payload)
+                                    except Exception, err:
+                                        sys.stderr.write("Could not connect to url:\n")
+                                        traceback_string = traceback.format_exc()
+                                        sys.stderr.write(traceback_string + '\n')
+                                        outgoing.append("Please inform the developer that there is an issue with the memos url.")
+                                        outgoing.append("Your memos have been kept in the system.")
+                                        return outgoing
+                                    try:
+                                        r.raise_for_status() #will cause an exception if the request is bad...
+                                    except Exception, err:
+                                        traceback_string = traceback.format_exc()
+                                        sys.stderr.write('HTTP error:\n' + traceback_string + '\n')
+                                        outgoing.append("Please inform the developer that there is an issue with the memos request.")
+                                        outgoing.append("Your memos have been kept in the system.")
+                                        return outgoing
+                                    outgoing.append("Here is a link to your memos:")
+                                    outgoing.append(r.json()['url'])
                                     cell.memos = []
                                     self.save()
                                     return outgoing
@@ -210,3 +228,7 @@ class Seenbot(object):
                     elif "!time" in data[3]:
                         outgoing.append("The time is: " + timestamp)
                         return outgoing
+        if outgoing != []:
+            return outgoing
+        else:
+            return None
