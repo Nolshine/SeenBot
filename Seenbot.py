@@ -56,9 +56,10 @@ class Seenbot(object):
             self.database.append(DataCell.load(cell))
 
     def process(self, raw, botnick, pb_api_dev_key):
-        data = raw.lower().split()
+        data_raw = raw.split() # for rickrolling!
+        data_lower = raw.lower().split()
         case = None
-        nick = data[0].strip(':').split('!')[0]
+        nick = data_lower[0].strip(':').split('!')[0]
         outgoing = []
 
         if nick == botnick:
@@ -66,8 +67,8 @@ class Seenbot(object):
             return None
 
         timestamp = datetime.now(pytz.utc).strftime("%c") + " UTC"
-        if len(data) > 1:
-            case = data[1]
+        if len(data_lower) > 1:
+            case = data_lower[1]
         if case != None:
             case_join = (case == 'join')
             case_privmsg = (case == 'privmsg')
@@ -97,7 +98,7 @@ class Seenbot(object):
 
             if case_nick:
                 sys.stderr.write("NICK detected.\n")
-                new_nick = data[2].strip(':')
+                new_nick = data_lower[2].strip(':')
                 if self.database == []:
                     self.database.append(DataCell(new_nick, timestamp))
                 else:
@@ -142,12 +143,12 @@ class Seenbot(object):
                 self.save()
 
             if case_privmsg:
-                if len(data) >= 4:
-                    if data[3] == ":!seen":
-                        if len(data) == 4:
+                if len(data_lower) >= 4:
+                    if data_lower[3] == ":!seen":
+                        if len(data_lower) == 4:
                             outgoing.append("'!seen' requires a target. (!seen <TARGET>)")
                             return outgoing
-                        query = data[4]
+                        query = data_lower[4]
                         if query == botnick.lower():
                             outgoing.append("Last seen " + query + " on " + timestamp + ", when looking at the mirror.")
                             return outgoing
@@ -157,13 +158,13 @@ class Seenbot(object):
                                 return outgoing
                         outgoing.append("I have not seen " + query + " yet.")
                         return outgoing
-                    elif data[3] == ":!tell":
-                        if len(data) == 4:
+                    elif data_lower[3] == ":!tell":
+                        if len(data_lower) == 4:
                             outgoing.append("'!tell' requires two arguments. (!tell <TARGET> <MESSAGE>)")
                             return outgoing
                         else:
-                            target = data[4]
-                            if len(data) == 5:
+                            target = data_lower[4]
+                            if len(data_lower) == 5:
                                 outgoing.append("'!tell' requires two arguments. (!tell <TARGET> <MESSAGE>)")
                                 return outgoing
                             else:
@@ -172,7 +173,7 @@ class Seenbot(object):
                                     return outgoing
                                 for cell in self.database:
                                     if (target == cell.current_nick) or (target in cell.nick_history):
-                                        memo = string.join(data[5:]).decode('UTF-8', 'replace')
+                                        memo = string.join(data_raw[5:]).decode('UTF-8', 'replace')
                                         cell.memos.append((timestamp, nick, memo))
                                         outgoing.append("I will tell them when I next see them.")
                                         cell.message_light = True
@@ -181,7 +182,7 @@ class Seenbot(object):
                                         return outgoing
                                 outgoing.append("I have not seen "+target+" yet.")
                                 return outgoing
-                    elif data[3] == ":!memos":
+                    elif data_lower[3] == ":!memos":
                         if (nick + ": You have memos!") in outgoing:
                             outgoing.remove(nick + ": You have memos!")
                         for cell in self.database:
@@ -225,7 +226,7 @@ class Seenbot(object):
                                 else:
                                     outgoing.append(nick + ":You have no memos.")
                                     return outgoing
-                    elif "!time" in data[3]:
+                    elif "!time" in data_lower[3]:
                         outgoing.append("The time is: " + timestamp)
                         return outgoing
         if outgoing != []:
