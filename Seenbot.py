@@ -127,19 +127,26 @@ class Seenbot(object):
                             if cell.memos != [] and cell.message_light:
                                 outgoing.append(cell.current_nick + ": You have memos!")
                                 cell.message_light = False
-                            for i in range(len(self.database)):
-                                if self.database[i].recent_timestamp == timestamp:
-                                    continue
-                                if (self.database[i].current_nick == cell.current_nick) or \
-                                    (cell.current_nick in self.database[i].nick_history) or \
-                                    (self.database[i].current_nick in cell.nick_history):
-                                    for nickname in self.database[i].nick_history:
-                                        if not (nickname in cell.nick_history):
-                                            cell.nick_history.append(nickname)
-                                    self.database.pop(i)
+                           
+                            repeat = True
+                            while repeat:
+                                repeat = False
+                                for i in range(len(self.database)):
+                                    if self.database[i].recent_timestamp == timestamp:
+                                        continue
+                                    if (self.database[i].current_nick == cell.current_nick) or \
+                                        (cell.current_nick in self.database[i].nick_history) or \
+                                        (self.database[i].current_nick in cell.nick_history):
+                                        for nickname in self.database[i].nick_history:
+                                            if not (nickname in cell.nick_history):
+                                                cell.nick_history.append(nickname)
+                                        self.database.pop(i)
+                                        repeat = True
+                                        break
+
                             break
-                if not found:
-                    self.database.append(DataCell(new_nick, timestamp))
+                    if not found:
+                        self.database.append(DataCell(new_nick, timestamp))
                 self.save()
 
             if case_privmsg:
