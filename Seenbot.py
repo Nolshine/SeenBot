@@ -222,32 +222,42 @@ class Seenbot(object):
         return ["I have not seen " + target + " yet."]
 
     def handleMemosCommand(self, timestamp, nick, data_raw, data_lower):
-        for cell in self.database:
-            if nick == cell.current_nick:
-                if cell.memos != []:
-                    pb_api_paste_code = ""
-                    for memo in cell.memos:
-                        msg = memo[0] + " - " + memo[1] + " said to you: " + memo[2] + "\n"
-                        pb_api_paste_code += msg
+        cell = self.findCell(nick)
+        if cell is None:
+            return []
 
-                    # this portion will convert memo list to a pastebin post
-                    try:
-                        pasteUrl = self.paste.create(pb_api_paste_code)
-                    except PasteService.CannotConnect as err:
-                        outgoing.append("Please inform the developer that there is an issue with the memos url.")
-                        outgoing.append("Your memos have been kept in the system.")
-                        return outgoing
-                    except PasteService.HttpError as err:
-                        outgoing.append("Please inform the developer that there is an issue with the memos request.")
-                        outgoing.append("Your memos have been kept in the system.")
-                        return outgoing
+        if cell.memos == []:
+            return [nick + ": You have no memos."]
 
-                    cell.memos = []
-                    self.save()
-                    return ["Here is a link to your memos:", pasteUrl]
-                else:
-                    return [nick + ":You have no memos."]
+        pb_api_paste_code = ""
+        for memo in cell.memos:
+            msg = memo[0] + " - " + memo[1] + " said to you: " + memo[2] + "\n"
+            pb_api_paste_code += msg
+
+        # this portion will convert memo list to a pastebin post
+        try:
+            pasteUrl = self.paste.create(pb_api_paste_code)
+        except PasteService.CannotConnect as err:
+            return [
+                "Please inform the developer that there is an issue with the memos url.",
+                "Your memos have been kept in the system."
+            ]
+        except PasteService.HttpError as err:
+            return [
+                "Please inform the developer that there is an issue with the memos request.",
+                "Your memos have been kept in the system."
+            ]
+
+        cell.memos = []
+        self.save()
+        return ["Here is a link to your memos:", pasteUrl]
 
     def handleTimeCommand(self, timestamp, nick, data_raw, data_lower):
         return ["The time is: " + timestamp]
+
+    def findCell(self, nick):
+        for cell in self.database:
+            if nick == cell.current_nick:
+                return cell
+        return None
 
