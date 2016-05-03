@@ -251,6 +251,8 @@ class Seenbot(object):
             return self.handleMemosCommand(network, nick, data_raw, data_lower)
         elif "!time" in data_lower[3]:
             return self.handleTimeCommand(network, nick, data_raw, data_lower)
+        elif data_lower[3] == ":!aliases":
+            return self.handleAliasesCommand(network, nick, data_raw, data_lower)
         return []
 
     def handleSeenCommand(self, network, nick, data_raw, data_lower):
@@ -335,9 +337,20 @@ class Seenbot(object):
     def handleTimeCommand(self, network, nick, data_raw, data_lower):
         return ["The time is: " + formatTimestamp(time.time())]
 
-    def findCell(self, nick):
-        for cell in self.database:
-            if nick == cell.current_nick:
-                return cell
-        return None
+    def handleAliasesCommand(self, network, nick, data_raw, data_lower):
+        if len(data_lower) == 4:
+            return ["'!aliases' requires a nick. (!seen <NICK>)"]
+
+        query = data_lower[4]
+        if query == self.botnick.lower():
+            return ["If I tell you, I'll have to kill you."]
+
+        user = self.database.getNick(query)
+        person = self.database.getPerson(user.gid)
+        aliases = list(person.nicks)
+        aliases.remove(query)
+
+        if len(aliases) == 0:
+            return ["%s has no known aliases" % query]
+        return ["%s is also known as: %s" % (query, ", ".join(aliases))]
 
