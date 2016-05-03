@@ -1,5 +1,4 @@
 from datetime import datetime
-import pytz
 import json
 import os.path
 import sys
@@ -8,19 +7,15 @@ import time
 import PasteService
 
 # "person" is a group of nicks
-#   may be "official" with registration?
+#   TODO: may be "official" with registration
+#       official persons cannot be merged with one another accidentally
+#       todo: a force merge command
 # "nick" is one username
 #   has first and last seen
-# memos are attached to a nick
-# when a person is seen, if any nicks have memos, let them know
-# when NICK a b, try to add a or b to person for other, if both official people then abort
-#   optional force
-# seen matches exactly and person
-# aliases gives list of nicks in associated person
-# move moves a nick from one group to another
-# forget forgets a nick
+#   has memos associated with it
 
-# keep history of join/fjoin/move/split
+# TODO: keep history of join/fjoin/move/split 
+# TODO: !merge, !split, !move, !forget, !info <nick|gid>
 
 # person is keyed on group id (int)
 # nick is keyed on nick (string)
@@ -79,6 +74,12 @@ class PersonDatabase:
 
         if len(user.memos) > 0:
             nperson.alert = True
+
+        # if old group has no memos, make sure it doesn't alert
+        og = [self.getNick(n) for n in person.nicks]
+        totalMemos = reduce(lambda l, r: l + r, [len(o.memos) for o in og], 0)
+        if totalMemos == 0:
+            person.alert = False
 
         # if the old group is now empty, delete it
         if len(person.nicks) < 1:
@@ -170,6 +171,8 @@ class Seenbot(object):
             return None
 
         user = self.database.getNick(nick)
+        if user.firstSeen == 0:
+            user.firstSeen = time.time()
         user.lastSeen = time.time()
 
         if len(data_lower) > 1:
@@ -206,6 +209,8 @@ class Seenbot(object):
         user.lastSeen = time.time()
 
         nuser = self.database.getNick(new_nick)
+        if nuser.firstSeen == 0:
+            nuser.firstSeen = time.time()
         nuser.lastSeen = time.time()
 
         lhs = self.database.getPerson(user.gid)
