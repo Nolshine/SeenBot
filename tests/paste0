@@ -1,5 +1,7 @@
+esper :jac JOIN #3dpe
 esper :jac PRIVMSG #3dpe :hi
 esper :abc PRIVMSG #3dpe :!seen jac
+esper :abc PRIVMSG #3dpe :!time
 esper :abc PRIVMSG #3dpe :!tell jac test
 esper :jac PRIVMSG #3dpe :hi again
 esper :jac PRIVMSG #3dpe :!memos
