@@ -4,8 +4,7 @@ import json
 import os.path
 import sys
 import string
-import requests
-import traceback
+import PasteService
 
 class DataCell(object):
     def __init__(self, nick, timestamp):
@@ -34,7 +33,8 @@ class DataCell(object):
 class Seenbot(object):
     """handles storing and tracking 'last seen' data of users in the channel."""
 
-    def __init__(self, filename = "SolSeer.json"):
+    def __init__(self, paste, filename = "SolSeer.json"):
+        self.paste = paste
         self.database = []
         self.filename = filename
         self.load()
@@ -55,7 +55,7 @@ class Seenbot(object):
         for cell in o['database']:
             self.database.append(DataCell.load(cell))
 
-    def process(self, raw, botnick, pb_api_dev_key):
+    def process(self, raw, botnick):
         data_raw = raw.split() # for rickrolling!
         data_lower = raw.lower().split()
         case = None
@@ -201,32 +201,19 @@ class Seenbot(object):
                                         pb_api_paste_code += msg
 
                                     # this portion will convert memo list to a pastebin post
-                                    url = "https://serv2.pink/api/umiki/v1"
-                                    pb_payload = {}
-                                    pb_payload["api_key"] = pb_api_dev_key
-                                    #pb_payload["api_option"] = "paste"
-                                    #pb_payload["api_paste_private"] = "1" # paste an unlisted paste
-                                    #pb_payload["api_paste_expire"] = "1H" # expire new paste in one hour
-                                    pb_payload["content"] = pb_api_paste_code
                                     try:
-                                        r = requests.post(url, pb_payload)
-                                    except Exception, err:
-                                        sys.stderr.write("Could not connect to url:\n")
-                                        traceback_string = traceback.format_exc()
-                                        sys.stderr.write(traceback_string + '\n')
+                                        pasteUrl = self.paste.create(pb_api_paste_code)
+                                    except PasteService.CannotConnect as err:
                                         outgoing.append("Please inform the developer that there is an issue with the memos url.")
                                         outgoing.append("Your memos have been kept in the system.")
                                         return outgoing
-                                    try:
-                                        r.raise_for_status() #will cause an exception if the request is bad...
-                                    except Exception, err:
-                                        traceback_string = traceback.format_exc()
-                                        sys.stderr.write('HTTP error:\n' + traceback_string + '\n')
+                                    except PasteService.HttpError as err:
                                         outgoing.append("Please inform the developer that there is an issue with the memos request.")
                                         outgoing.append("Your memos have been kept in the system.")
                                         return outgoing
+
                                     outgoing.append("Here is a link to your memos:")
-                                    outgoing.append(r.json()['url'])
+                                    outgoing.append(pasteUrl)
                                     cell.memos = []
                                     self.save()
                                     return outgoing
