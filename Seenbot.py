@@ -4,6 +4,7 @@ import os.path
 import sys
 import string
 import time
+import re
 import PasteService
 from PersonDatabase import PersonDatabase
 
@@ -13,8 +14,9 @@ def formatTimestamp(ts):
 class Seenbot(object):
     """handles storing and tracking 'last seen' data of users in the channel."""
 
-    def __init__(self, botnick, paste, filename = "SolSeer.json"):
+    def __init__(self, botnick, prefixes, paste, filename = "SolSeer.json"):
         self.botnick = botnick
+        self.prefixes = prefixes
         self.paste = paste
         self.database = PersonDatabase()
         self.filename = filename
@@ -120,8 +122,17 @@ class Seenbot(object):
         outgoing = []
         if len(data_lower) < 4:
             return outgoing
-        if data_lower[3] == ":!seen":
-            return self.handleSeenCommand(network, nick, data_raw, data_lower)
+
+        # TODO: use cmdPrefix in help output?
+        isCommand, cmdPrefix, cmdText = self.parseCommand(' '.join(data_raw[3:]))
+        if isCommand == False or len(cmdText) < 1:
+            return outgoing
+
+        cmd = cmdText[0].lower()
+        args = cmdText[1:]
+
+        if cmd == "seen":
+            return self.handleSeenCommand(network, args)
         elif data_lower[3] == ":!tell":
             return self.handleTellCommand(network, nick, data_raw, data_lower)
         elif data_lower[3] == ":!memos":
@@ -132,10 +143,10 @@ class Seenbot(object):
             return self.handleAliasesCommand(network, nick, data_raw, data_lower)
         return []
 
-    def handleSeenCommand(self, network, nick, data_raw, data_lower):
-        if len(data_lower) == 4:
+    def handleSeenCommand(self, network, args):
+        if len(args) != 1:
             return ["'!seen' requires a target. (!seen <TARGET>)"]
-        query = data_lower[4]
+        query = args[0].lower()
         if query == self.botnick.lower():
             return ["Last seen %s on %s, when looking at the mirror."
                     % (query, formatTimestamp(time.time()))]
@@ -230,4 +241,12 @@ class Seenbot(object):
         if len(aliases) == 0:
             return ["%s has no known aliases" % query]
         return ["%s is also known as: %s" % (query, ", ".join(aliases))]
+
+    def parseCommand(self, line):
+        line = line[1:] # strip starting colon
+        m = re.match(self.prefixes, line)
+        if m is None:
+            return (False, None, [])
+
+        return (True, m.group(0), line[len(m.group(0)):].split())
 

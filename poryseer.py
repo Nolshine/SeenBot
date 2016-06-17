@@ -14,7 +14,7 @@ def debug(text):
         sys.stderr.write(text + '\n')
 
 paste = PasteService.Umiki(config.dev_key)
-seenBot = Seenbot.Seenbot(config.nick, paste) # initialize the bot
+seenBot = Seenbot.Seenbot(config.nick, config.prefixes, paste) # initialize the bot
 
 for line in iter(sys.stdin.readline, b''):
 # strip network name
