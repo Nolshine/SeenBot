@@ -1,3 +1,5 @@
 esper :jac PRIVMSG #3dpe :hi
 esper :jac NICK jac2
 esper :abc PRIVMSG #3dpe :!seen jac
+esper :abc PRIVMSG #3dpe :!aliases jac
+esper :abc PRIVMSG #3dpe :!aliases abc

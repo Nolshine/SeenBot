@@ -7,6 +7,7 @@ class Config:
         self.nick = "porygit"
         self.channel = "#3dpe"
         self.debug = True
+        self.prefixes = '!'
         if not (filename is None):
             self.load(filename)
     def load(self, filename):

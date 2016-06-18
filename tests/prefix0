@@ -1,0 +1,10 @@
+esper :jac PRIVMSG #3dpe :hi
+esper :abc PRIVMSG #3dpe :!seen jac
+esper :abc PRIVMSG #3dpe :porygit, seen jac
+esper :abc PRIVMSG #3dpe :porygit: seen jac
+esper :abc PRIVMSG #3dpe :porygit,seen jac
+esper :abc PRIVMSG #3dpe :porygit:seen jac
+esper :abc PRIVMSG #3dpe :porygit,  seen jac
+esper :abc PRIVMSG #3dpe :porygit:   seen jac
+esper :abc PRIVMSG #3dpe :  porygit,  seen jac
+esper :abc PRIVMSG #3dpe : porygit:   seen jac

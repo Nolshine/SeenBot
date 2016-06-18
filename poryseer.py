@@ -14,7 +14,7 @@ def debug(text):
         sys.stderr.write(text + '\n')
 
 paste = PasteService.Umiki(config.dev_key)
-seenBot = Seenbot.Seenbot(config.nick, paste) # initialize the bot
+seenBot = Seenbot.Seenbot(config.nick, config.prefixes, paste) # initialize the bot
 
 for line in iter(sys.stdin.readline, b''):
 # strip network name
@@ -22,7 +22,7 @@ for line in iter(sys.stdin.readline, b''):
 
     if ("PRIVMSG" in line) or ("NICK" in line) or ("JOIN" in line):
         debug(config.nick + " <==  " + line)
-        seen = seenBot.process(line)
+        seen = seenBot.process(config.network, line)
         if seen != None:
             for msg in seen:
                 ircMessage = config.network + " PRIVMSG " + config.channel + " :" + msg
