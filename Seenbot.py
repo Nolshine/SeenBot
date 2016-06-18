@@ -16,7 +16,8 @@ class Seenbot(object):
 
     def __init__(self, botnick, prefixes, paste, filename = "SolSeer.json"):
         self.botnick = botnick
-        self.prefixes = prefixes
+        # ensure the regex is start-of-line anchored
+        self.prefixes = '^\\s*(' + prefixes + ')'
         self.paste = paste
         self.database = PersonDatabase()
         self.filename = filename

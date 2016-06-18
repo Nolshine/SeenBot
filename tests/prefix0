@@ -6,3 +6,5 @@ esper :abc PRIVMSG #3dpe :porygit,seen jac
 esper :abc PRIVMSG #3dpe :porygit:seen jac
 esper :abc PRIVMSG #3dpe :porygit,  seen jac
 esper :abc PRIVMSG #3dpe :porygit:   seen jac
+esper :abc PRIVMSG #3dpe :  porygit,  seen jac
+esper :abc PRIVMSG #3dpe : porygit:   seen jac
